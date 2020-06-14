@@ -11,7 +11,13 @@ public class Player : MonoBehaviour
     private float jumpSpeed = 5.0f;
 
     [SerializeField]
+    private float climbSpeed = 5.0f;
+
+    [SerializeField]
     private LayerMask groundLayer = 0;
+
+    [SerializeField]
+    private LayerMask ladderLayer = 0;
 
     private bool isAlive = true;
 
@@ -41,7 +47,7 @@ public class Player : MonoBehaviour
 
     private void Jump(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
-        if (capsuleCollider2D.IsTouchingLayers(groundLayer))
+        if (capsuleCollider2D.IsTouchingLayers(groundLayer) && !capsuleCollider2D.IsTouchingLayers(ladderLayer))
         {
             Debug.Log("Jump");
             animator.SetTrigger("Jumping");
@@ -59,6 +65,7 @@ public class Player : MonoBehaviour
     void Update()
     {
         Run();
+        ClimbLadder();
     }
 
     private void Run()
@@ -69,6 +76,32 @@ public class Player : MonoBehaviour
 
         bool playerHasHorizontalSpeed = Mathf.Abs(rb.velocity.x) > Mathf.Epsilon;
         animator.SetBool("Running", playerHasHorizontalSpeed);
+    }
+
+    private void ClimbLadder()
+    {
+        if(!capsuleCollider2D.IsTouchingLayers(ladderLayer))
+        {
+            rb.gravityScale = 1.0f;
+            animator.SetBool("Climbing", false);
+            return;
+        }
+
+        rb.gravityScale = 0;
+        bool hasVerticalInput = Mathf.Abs(playerInput.y) > Mathf.Epsilon;
+
+        if(hasVerticalInput)
+        {
+            float controlThrow = playerInput.y;
+            Vector2 climbVelocity = new Vector2(rb.velocity.x, controlThrow * climbSpeed);
+            rb.velocity = climbVelocity;
+        }
+        else
+        {
+            rb.velocity = new Vector2(rb.velocity.x, 0f);
+        }
+
+        animator.SetBool("Climbing", hasVerticalInput);
     }
 
     private void FlipSprite()

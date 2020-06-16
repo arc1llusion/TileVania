@@ -32,6 +32,11 @@ public class Player : MonoBehaviour
     private BoxCollider2D feet = null;
 
     private InputActions Actions = null;
+
+    private void Awake()
+    {
+    }
+
     void Start()
     {
         Actions = new InputActions();
@@ -53,7 +58,7 @@ public class Player : MonoBehaviour
 
     private void Jump(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
-        if (feet.IsTouchingLayers(groundLayer) && !feet.IsTouchingLayers(ladderLayer))
+        if (feet && feet.IsTouchingLayers(groundLayer) && !feet.IsTouchingLayers(ladderLayer))
         {
             animator.SetTrigger("Jumping");
             Vector2 jumpVelocityToAdd = new Vector2(0f, jumpSpeed);
@@ -129,15 +134,8 @@ public class Player : MonoBehaviour
             rb.velocity = deathKick;
             isAlive = false;
 
-            StartCoroutine(RestartLevel());
+            Debug.Log("Player" + GameSession.Instance.GetInstanceID());
+            GameSession.Instance.ProcessPlayerDeath();
         }
-    }
-
-    private IEnumerator RestartLevel()
-    {
-        yield return new WaitForSeconds(2.0f);
-
-        var currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-        SceneManager.LoadScene(currentSceneIndex);
     }
 }

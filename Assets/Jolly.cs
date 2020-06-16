@@ -8,8 +8,6 @@ public class Jolly : MonoBehaviour
     private Rigidbody2D _jollyRigid = null;
     private SpriteRenderer _renderer = null;
 
-    private bool _movingRight = true;
-
     void Start()
     {
         _animator = GetComponent<Animator>();

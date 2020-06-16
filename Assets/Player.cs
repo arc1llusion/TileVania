@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -19,12 +20,16 @@ public class Player : MonoBehaviour
     [SerializeField]
     private LayerMask ladderLayer = 0;
 
+    [SerializeField]
+    private Vector2 deathKick = new Vector2(25f, 25f);
+
     private bool isAlive = true;
 
     private Vector2 playerInput = Vector2.zero;
     private Rigidbody2D rb = null;
     private Animator animator = null;
-    private Collider2D capsuleCollider2D = null;
+    private CapsuleCollider2D capsuleCollider2D = null;
+    private BoxCollider2D feet = null;
 
     private InputActions Actions = null;
     void Start()
@@ -43,13 +48,13 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         capsuleCollider2D = GetComponent<CapsuleCollider2D>();
+        feet = GetComponent<BoxCollider2D>();
     }
 
     private void Jump(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
-        if (capsuleCollider2D.IsTouchingLayers(groundLayer) && !capsuleCollider2D.IsTouchingLayers(ladderLayer))
+        if (feet.IsTouchingLayers(groundLayer) && !feet.IsTouchingLayers(ladderLayer))
         {
-            Debug.Log("Jump");
             animator.SetTrigger("Jumping");
             Vector2 jumpVelocityToAdd = new Vector2(0f, jumpSpeed);
             rb.velocity += jumpVelocityToAdd;
@@ -58,21 +63,23 @@ public class Player : MonoBehaviour
 
     private void Move(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
-        Debug.Log("Move");
         playerInput = obj.ReadValue<Vector2>();
     }
 
     void Update()
     {
+        if(!isAlive) { return; }
+
         Run();
         ClimbLadder();
+        FlipSprite();
+        Die();
     }
 
     private void Run()
     {
         Vector2 playerVelocity = new Vector2(playerInput.x, rb.velocity.y);
         rb.velocity = new Vector2(playerVelocity.x * runSpeed, playerVelocity.y);
-        FlipSprite();
 
         bool playerHasHorizontalSpeed = Mathf.Abs(rb.velocity.x) > Mathf.Epsilon;
         animator.SetBool("Running", playerHasHorizontalSpeed);
@@ -80,7 +87,7 @@ public class Player : MonoBehaviour
 
     private void ClimbLadder()
     {
-        if(!capsuleCollider2D.IsTouchingLayers(ladderLayer))
+        if(!feet.IsTouchingLayers(ladderLayer))
         {
             rb.gravityScale = 1.0f;
             animator.SetBool("Climbing", false);
@@ -113,8 +120,24 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void Jump()
+    private void Die()
     {
+        if(capsuleCollider2D.IsTouchingLayers(LayerMask.GetMask("Enemy", "Hazards")) || feet.IsTouchingLayers(LayerMask.GetMask("Hazards")))
+        {
+            Debug.Log("Dead");
+            animator.SetTrigger("Dying");
+            rb.velocity = deathKick;
+            isAlive = false;
 
+            StartCoroutine(RestartLevel());
+        }
+    }
+
+    private IEnumerator RestartLevel()
+    {
+        yield return new WaitForSeconds(2.0f);
+
+        var currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        SceneManager.LoadScene(currentSceneIndex);
     }
 }

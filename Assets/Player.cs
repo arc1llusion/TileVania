@@ -61,7 +61,7 @@ public class Player : MonoBehaviour
         if (feet && feet.IsTouchingLayers(groundLayer) && !feet.IsTouchingLayers(ladderLayer))
         {
             animator.SetTrigger("Jumping");
-            Vector2 jumpVelocityToAdd = new Vector2(0f, jumpSpeed);
+            Vector2 jumpVelocityToAdd = new Vector2(rb.velocity.x +10, jumpSpeed);
             rb.velocity += jumpVelocityToAdd;
         }
     }
